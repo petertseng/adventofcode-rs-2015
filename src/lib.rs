@@ -1,6 +1,24 @@
 use std::env;
 use std::fs;
 
+#[macro_export]
+macro_rules! tests {
+    (
+        $($test_func:ident {
+            $( $test_name:ident( $( $param:expr ),* ); )+
+        })+
+    ) => {
+        $(
+            $(
+                #[test]
+                fn $test_name() {
+                    $test_func($( $param ),* )
+                }
+            )+
+        )+
+    }
+}
+
 pub fn numbers<T>(s: &str) -> Vec<T>
 where
     T: std::str::FromStr,

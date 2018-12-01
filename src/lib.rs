@@ -1,3 +1,5 @@
+pub mod md5;
+
 use std::env;
 use std::fs;
 

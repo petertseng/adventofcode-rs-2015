@@ -1,14 +1,14 @@
-fn look_and_say(s: &str) -> String {
+fn look_and_say(s: &[u8]) -> Vec<u8> {
     let mut count = 0;
-    let mut counted = '\0';
-    let mut r = String::new();
+    let mut counted = 0;
+    let mut r = Vec::new();
 
-    for c in s.chars().chain(std::iter::once('\0')) {
+    for &c in s.iter().chain(std::iter::once(&0)) {
         if c == counted {
             count += 1;
         } else {
             if count > 0 {
-                r.push_str(&format!("{}", count));
+                r.push(count);
                 r.push(counted);
             }
             counted = c;
@@ -19,12 +19,16 @@ fn look_and_say(s: &str) -> String {
     r
 }
 
+fn digits(s: &str) -> Vec<u8> {
+    s.bytes().map(|c| c - b'0').collect()
+}
+
 fn main() {
     let input = std::env::args()
         .nth(1)
         .unwrap_or_else(adventofcode::read_input_file);
 
-    let mut current = input;
+    let mut current = digits(&input);
 
     for _ in 0..40 {
         current = look_and_say(&current);
@@ -55,6 +59,6 @@ mod tests {
     }
 
     fn test(s: &str, expect: &str) {
-        assert_eq!(look_and_say(s), expect);
+        assert_eq!(look_and_say(&digits(s)), digits(expect));
     }
 }

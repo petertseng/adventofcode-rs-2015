@@ -2,6 +2,51 @@
 #[allow(clippy::unreadable_literal)]
 const GAMMA: f64 = 0.5772156649015329;
 
+fn gifts(house: usize, limit: Option<usize>) -> usize {
+    let mut given = 0;
+    for i in 1..house {
+        if i * i > house {
+            break;
+        }
+        if house % i != 0 {
+            continue;
+        }
+        let factor1 = i;
+        let factor2 = house / i;
+        if limit.map_or(true, |l| factor2 <= l) {
+            given += factor1;
+        }
+        if factor1 != factor2 && limit.map_or(true, |l| factor1 <= l) {
+            given += factor2;
+        }
+    }
+    given
+}
+
+fn house_upper_bound(target: usize, limit: Option<usize>) -> usize {
+    // smallest greater factorial:
+    let mut bound = 2;
+    let mut n = 2;
+    while gifts(bound, limit) < target {
+        n += 1;
+        bound *= n;
+    }
+
+    // Decrease each factor
+    for from in (2..=n).rev() {
+        let bound_without = bound / from;
+        for to in 1..from {
+            let bound_with = bound_without * to;
+            if gifts(bound_with, limit) >= target {
+                bound = bound_with;
+                break;
+            }
+        }
+    }
+
+    bound
+}
+
 fn house_lower_bound(target: usize) -> usize {
     // Robin's inequality:
     // \sigma(n) < e^\gamma n \log \log n
@@ -25,7 +70,7 @@ fn house_lower_bound(target: usize) -> usize {
 fn first_house(target: usize, per_elf: u8, limit: Option<usize>) -> usize {
     let elf_factor_needed = target / usize::from(per_elf);
     let lower_bound = house_lower_bound(elf_factor_needed);
-    let upper_bound = elf_factor_needed;
+    let upper_bound = house_upper_bound(elf_factor_needed, limit);
     let mut presents = vec![usize::from(per_elf); upper_bound + 1 - lower_bound];
 
     for elf in 1..=upper_bound {
@@ -59,4 +104,25 @@ fn main() {
 
     println!("{}", first_house(target, 10, None));
     println!("{}", first_house(target, 11, Some(50)));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use adventofcode::tests;
+
+    tests! {
+        test_gifts {
+            // 1 + 2 + 3 + 6 + 9 + 18
+            no_limit(18, None, 39);
+            // 2 + 3 + 6 + 9 + 18
+            limit(18, Some(10), 38);
+            // same as above because 18 is elf 2's 9th house.
+            limit_exact(18, Some(9), 38);
+        }
+    }
+
+    fn test_gifts(house: usize, limit: Option<usize>, expect: usize) {
+        assert_eq!(gifts(house, limit), expect);
+    }
 }

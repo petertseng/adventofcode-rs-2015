@@ -7,6 +7,9 @@ fn increment(pw: &mut [u8], i: usize) {
         increment(pw, i - 1);
     } else {
         pw[i] += 1;
+        if pw[i] == b'i' || pw[i] == b'o' || pw[i] == b'l' {
+            pw[i] += 1;
+        }
     }
 }
 
@@ -62,6 +65,9 @@ mod tests {
     tests! {
         test_incr {
             single("a", 0, "b");
+            skip_i("h", 0, "j");
+            skip_l("k", 0, "m");
+            skip_o("n", 0, "p");
             in_many_simple("aa", 1, "ab");
             in_many_z("az", 1, "ba");
             in_many_cascade("azz", 2, "baa");

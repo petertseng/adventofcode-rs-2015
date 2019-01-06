@@ -10,14 +10,29 @@ fn iterations(row: u32, col: u32) -> u32 {
     (diagonal * diagonal + diagonal) / 2 - row
 }
 
-fn code(row: u32, col: u32) -> u64 {
-    let mut n = SEED;
-
-    for _ in 0..iterations(row, col) {
-        n = (n * BASE) % MODULUS;
+fn mod_pow(base: u64, exp: u32, m: u64) -> u64 {
+    if exp == 0 {
+        return 1;
     }
 
-    n
+    let mut odds = 1;
+    let mut evens = base;
+
+    let mut exp = exp;
+
+    while exp >= 2 {
+        if exp % 2 == 1 {
+            odds = odds * evens % m;
+        }
+        evens = evens * evens % m;
+        exp /= 2
+    }
+
+    evens * odds % m
+}
+
+fn code(row: u32, col: u32) -> u64 {
+    SEED * mod_pow(BASE, iterations(row, col), MODULUS) % MODULUS
 }
 
 fn main() {

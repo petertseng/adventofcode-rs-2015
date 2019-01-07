@@ -1,6 +1,22 @@
 use std::env;
 use std::fs;
 
+pub fn numbers<T>(s: &str) -> Vec<T>
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    s.split(|c: char| c != '-' && !c.is_digit(10))
+        .filter_map(|d| {
+            if d.is_empty() {
+                None
+            } else {
+                Some(d.parse::<T>().expect("can't parse integer"))
+            }
+        })
+        .collect()
+}
+
 pub fn read_input_file() -> String {
     let filename = env::args()
         .nth(1)

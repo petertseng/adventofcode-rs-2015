@@ -64,6 +64,22 @@ where
         .collect()
 }
 
+pub fn read_n_numbers<T>(n: usize) -> Vec<T>
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    if env::args().count() > n {
+        env::args()
+            .skip(1)
+            .take(n)
+            .map(|d| d.parse::<T>().expect("can't parse integer"))
+            .collect()
+    } else {
+        numbers(&read_input_file())
+    }
+}
+
 pub fn read_input_lines<T, F>(f: F) -> Vec<T>
 where
     F: FnMut(&str) -> T,

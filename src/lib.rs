@@ -17,6 +17,13 @@ where
         .collect()
 }
 
+pub fn read_input_lines<T, F>(f: F) -> Vec<T>
+where
+    F: FnMut(&str) -> T,
+{
+    read_input_file().lines().map(f).collect()
+}
+
 pub fn read_input_file() -> String {
     let filename = env::args()
         .nth(1)

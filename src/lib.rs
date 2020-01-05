@@ -21,6 +21,33 @@ macro_rules! tests {
     }
 }
 
+pub fn each_perm<F, T>(v: &mut [T], mut f: F)
+where
+    F: FnMut(&[T]),
+{
+    each_perm_gen(v.len(), v, &mut f);
+}
+
+fn each_perm_gen<F, T>(k: usize, v: &mut [T], f: &mut F)
+where
+    F: FnMut(&[T]),
+{
+    if k == 1 {
+        f(v);
+        return;
+    }
+
+    each_perm_gen(k - 1, v, f);
+    for i in 0..(k - 1) {
+        if k % 2 == 0 {
+            v.swap(i, k - 1);
+        } else {
+            v.swap(0, k - 1);
+        }
+        each_perm_gen(k - 1, v, f);
+    }
+}
+
 pub fn numbers<T>(s: &str) -> Vec<T>
 where
     T: std::str::FromStr,

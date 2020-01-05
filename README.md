@@ -45,12 +45,10 @@ For educational purposes, I implemented these myself.
 ### Performance
 
 In most cases, at least on par with the D and Haskell implementations.
-Most notable exception is on day 10 because the D and Haskell implementations use the Cosmological Theorem and the Rust implementation doesn't.
 
 Inexplicably significantly better at:
 
 * Day 06 (Light Grid): 6x over Haskell, 2x over D
-* Day 10 (Look and Say) if Haskell and D do *not* use the Cosmological Theorem: 16x over Haskell, 11x over D
 * Day 15 (Cookies): 4x over Haskell, 3x over D
 * Day 18 (Game of Life): 3x over Haskell, 2x over D
 * Day 22 (Wizard): 3x over Haskell, 3x over D

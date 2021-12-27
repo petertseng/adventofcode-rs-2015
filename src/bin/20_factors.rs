@@ -1,128 +1,66 @@
-// Euler-Mascheroni constant
-#[allow(clippy::unreadable_literal)]
-const GAMMA: f64 = 0.5772156649015329;
+use std::collections::HashMap;
 
-fn gifts(house: usize, limit: Option<usize>) -> usize {
-    let mut given = 0;
-    for i in 1..house {
-        if i * i > house {
-            break;
-        }
-        if house % i != 0 {
-            continue;
-        }
-        let factor1 = i;
-        let factor2 = house / i;
-        if limit.map_or(true, |l| factor2 <= l) {
-            given += factor1;
-        }
-        if factor1 != factor2 && limit.map_or(true, |l| factor1 <= l) {
-            given += factor2;
-        }
+const PRIMES: [u32; 15] = [47, 43, 41, 37, 31, 29, 23, 19, 17, 13, 11, 7, 5, 3, 2];
+
+// askalski's tip:
+// https://www.reddit.com/r/adventofcode/comments/po1zel/comment/hd1esc2
+fn sum_exceeds(goal: u32, primes: &[u32], cache: &mut HashMap<(u32, u32), u32>) -> u32 {
+    if primes.is_empty() {
+        return goal;
     }
-    given
+
+    let prime = primes[0];
+    if let Some(&cached) = cache.get(&(goal, prime)) {
+        return cached;
+    }
+
+    let mut best = sum_exceeds(goal, &primes[1..], cache);
+
+    let mut prime_power = 1;
+    let mut prime_sum = 1;
+
+    while prime_sum < goal {
+        prime_power *= prime;
+        prime_sum += prime_power;
+
+        // subproblem: ceil(goal/prime_sum) using only primes less than prime
+        let subgoal = (goal + prime_sum - 1) / prime_sum;
+        best = std::cmp::min(
+            best,
+            prime_power * sum_exceeds(subgoal, &primes[1..], cache),
+        );
+    }
+
+    cache.insert((goal, prime), best);
+
+    best
 }
 
-fn house_upper_bound(target: usize, limit: Option<usize>) -> usize {
-    // smallest greater factorial:
-    let mut bound = 2;
-    let mut n = 2;
-    while gifts(bound, limit) < target {
-        n += 1;
-        bound *= n;
-    }
-
-    // Decrease each factor
-    for from in (2..=n).rev() {
-        let bound_without = bound / from;
-        for to in 1..from {
-            let bound_with = bound_without * to;
-            if gifts(bound_with, limit) >= target {
-                bound = bound_with;
-                break;
-            }
-        }
-    }
-
-    bound
-}
-
-fn house_lower_bound(target: usize) -> usize {
-    // Robin's inequality:
-    // \sigma(n) < e^\gamma n \log \log n
-    // n \log \log n > \frac{T}{e^\gamma}
-    // lower bound, so \log \log n can be increased to \log \log T
-    // n > \frac{T}{e^\gamma \log \log T}
-
-    let n = (target as f64 / (GAMMA.exp() * (target as f64).ln().ln())).ceil() as usize;
-
-    // TODO: This was approximate (since we changed an n for T) and we can do better,
-    // but the improvement is unlikely to be significant (704242 -> 733346, 641725 -> 668446).
-
-    // Robin's inequality doesn't hold for n <= 5040.
-    if n > 5040 {
-        n
-    } else {
-        1
-    }
-}
-
-fn first_house(target: usize, per_elf: u8, limit: Option<usize>) -> usize {
-    let elf_factor_needed = target / usize::from(per_elf);
-    let lower_bound = house_lower_bound(elf_factor_needed);
-    let upper_bound = house_upper_bound(elf_factor_needed, limit);
-    let mut presents = vec![usize::from(per_elf); upper_bound + 1 - lower_bound];
-
-    for elf in 1..=upper_bound {
-        let default_mult = upper_bound / elf;
-        let max_mult = limit.map_or(default_mult, |l| std::cmp::min(l, default_mult));
-
-        let skipped = if elf < lower_bound {
-            (lower_bound - 1) / elf
-        } else {
-            0
-        };
-
-        for mult in (skipped + 1)..=max_mult {
-            let house = elf * mult;
-            presents[house - lower_bound] += elf;
-            if mult == 1 && presents[house - lower_bound] >= elf_factor_needed {
-                return house;
-            }
-        }
-    }
-
-    unreachable!("upper bound is wrong");
+fn good2(target: u32, house: u32) -> bool {
+    11 * (1..50)
+        .into_iter()
+        .map(|d| if house % d == 0 { house / d } else { 0 })
+        .sum::<u32>()
+        >= target
 }
 
 fn main() {
     let target = std::env::args()
         .nth(1)
         .unwrap_or_else(adventofcode::read_input_file)
-        .parse::<usize>()
+        .parse::<u32>()
         .expect("not an integer");
 
-    println!("{}", first_house(target, 10, None));
-    println!("{}", first_house(target, 11, Some(50)));
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use adventofcode::tests;
-
-    tests! {
-        test_gifts {
-            // 1 + 2 + 3 + 6 + 9 + 18
-            no_limit(18, None, 39);
-            // 2 + 3 + 6 + 9 + 18
-            limit(18, Some(10), 38);
-            // same as above because 18 is elf 2's 9th house.
-            limit_exact(18, Some(9), 38);
-        }
-    }
-
-    fn test_gifts(house: usize, limit: Option<usize>, expect: usize) {
-        assert_eq!(gifts(house, limit), expect);
-    }
+    let mut cache = HashMap::new();
+    let house1 = sum_exceeds(target / 10, &PRIMES, &mut cache);
+    println!("{}", house1);
+    let lower_bound = if good2(target, house1) { 0 } else { house1 };
+    println!(
+        "{}",
+        (lower_bound..target)
+            .into_iter()
+            .step_by(2 * 3 * 5 * 7)
+            .find(|&x| good2(target, x))
+            .unwrap()
+    );
 }
